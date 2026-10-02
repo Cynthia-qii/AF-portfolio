@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>肖筠怡 · Portfolio — Calculator Edition</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['"Share Tech Mono"', 'monospace'],
+            lcd: ['"Chakra Petch"', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            // 莫兰迪白 + 暖灰（统一背景 / 中性面，60%）
+            cream: {
+              50:  '#FCFAF6', // 纸面（面板 / 卡片）
+              100: '#F6F4F0', // 莫兰迪白（页面统一背景）
+              200: '#EFEBE2', // hover / 次级面
+              300: '#E6E1D6', // 分割线 / 边框
+              400: '#D8D2C4', // 强调边框
+              500: '#B8B0A1',
+              600: '#8C867C', // 弱化文字
+            },
+            // 灰蓝（主色色阶，30%）
+            dusty: {
+              50:  '#EEF2F5',
+              100: '#DEE6EC',
+              200: '#C3CFD9',
+              300: '#A7B7C5',
+              400: '#8C9FB0',
+              500: '#73879A',
+              600: '#5C6F82',
+              700: '#495A6B',
+              800: '#394655',
+              900: '#2B3542',
+            },
+            // Puce 紫红（强调色，10%，含指定 #6E2E34）
+            puce: {
+              50:  '#F5EDED',
+              100: '#E9D8D8',
+              200: '#D2AEAE',
+              300: '#B98486',
+              400: '#A25F62',
+              500: '#884248',
+              600: '#6E2E34',
+              700: '#592327',
+              800: '#431A1D',
+              900: '#2E1113',
+            },
+            // 灰绿（语义·成功 / 在线状态）
+            sage: {
+              100: '#E8ECE4',
+              200: '#D2DACB',
+              300: '#B7C2AE',
+              400: '#9AA891',
+              500: '#7F8E76',
+              600: '#66755E',
+            },
+          },
+          boxShadow: {
+            'key': '0 4px 0 0 #495A6B, 0 6px 10px rgba(73,90,107,0.18)',
+            'key-active': '0 1px 0 0 #495A6B, inset 0 2px 4px rgba(73,90,107,0.30)',
+            'calc': '0 25px 50px -12px rgba(73,90,107,0.28), 0 0 30px rgba(92,111,130,0.15)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .calc-btn {
+      transition: all 0.08s ease;
+      box-shadow: 0 4px 0 0 #495A6B, 0 6px 12px rgba(73,90,107,0.18);
+    }
+    .calc-btn-red {
+      box-shadow: 0 4px 0 0 #431A1D, 0 6px 12px rgba(67,26,29,0.22);
+    }
+    .calc-btn:active, .calc-btn.pressed {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 0 #495A6B, inset 0 2px 4px rgba(73,90,107,0.30);
+    }
+    .calc-btn-red:active, .calc-btn-red.pressed {
+      box-shadow: 0 1px 0 0 #431A1D, inset 0 2px 4px rgba(67,26,29,0.32);
+    }
+    @keyframes printReceipt {
+      0% { max-height: 0; opacity: 0; transform: translateY(-20px); }
+      100% { max-height: 500px; opacity: 1; transform: translateY(0); }
+    }
+    .animate-print {
+      animation: printReceipt 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .lcd-screen {
+      background:
+        linear-gradient(rgba(43, 53, 66, 0) 50%, rgba(43, 53, 66, 0.35) 50%),
+        linear-gradient(90deg, rgba(140, 159, 176, 0.05), rgba(222, 230, 236, 0.02), rgba(115, 135, 154, 0.06));
+      background-size: 100% 3px, 6px 100%;
+    }
+    .cursor-blink {
+      animation: blink 1s steps(1) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+</head>
+<body class="bg-cream-100 text-[#4A453E] font-sans min-h-screen overflow-x-hidden antialiased selection:bg-puce-600 selection:text-white">
+
+  <!-- ==================== COVER PAGE ==================== -->
+  <section id="cover-page" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-cream-100 transition-opacity duration-700">
+    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse farthest-corner at 50% 50%, rgba(64,96,127,0) 0%, rgba(64,96,127,0) 46%, rgba(74,107,138,0.46) 68%, rgba(45,72,101,0.86) 100%);"></div>
+
+    <!-- 装饰物件（莫兰迪配色 · 财务主题，与计算器画风一致） -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <!-- 收据 · 左上 -->
+      <svg viewBox="0 0 88 120" class="hidden md:block absolute left-8 top-14 w-24 md:w-28 -rotate-12 drop-shadow-md" fill="none">
+        <path d="M16 8 H70 Q74 8 74 12 V98 L72 108 L64 98 L56 108 L48 98 L40 108 L32 98 L24 108 L16 98 Z" fill="#FCFAF6" stroke="#D8D2C4" stroke-width="1.5"/>
+        <line x1="23" y1="20" x2="66" y2="20" stroke="#C6BFB1" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="32" x2="58" y2="32" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="44" x2="63" y2="44" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="56" x2="51" y2="56" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="72" x2="66" y2="72" stroke="#6E2E34" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="84" x2="46" y2="84" stroke="#B98486" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+
+      <!-- 硬币堆 · 右上 -->
+      <svg viewBox="0 0 90 90" class="hidden md:block absolute right-12 top-16 w-24 md:w-28 rotate-6 drop-shadow-md" fill="none">
+        <ellipse cx="45" cy="66" rx="32" ry="13" fill="#C2B08A"/>
+        <ellipse cx="45" cy="62" rx="32" ry="13" fill="#D8C8A4"/>
+        <ellipse cx="45" cy="62" rx="24" ry="9" stroke="#B5A376" stroke-width="1.5"/>
+        <text x="45" y="66" text-anchor="middle" font-size="13" fill="#8C7B55" font-family="monospace">¥</text>
+        <ellipse cx="45" cy="42" rx="28" ry="11" fill="#E3D6B6"/>
+        <ellipse cx="45" cy="42" rx="21" ry="8" stroke="#C0AD82" stroke-width="1.5"/>
+        <text x="45" y="46" text-anchor="middle" font-size="12" fill="#9A885F" font-family="monospace">¥</text>
+        <ellipse cx="45" cy="20" rx="24" ry="9" fill="#EFE4CB"/>
+        <ellipse cx="45" cy="20" rx="18" ry="7" stroke="#CDBA8E" stroke-width="1.5"/>
+        <text x="45" y="23" text-anchor="middle" font-size="11" fill="#A69067" font-family="monospace">¥</text>
+      </svg>
+
+      <!-- 翻开的书 · 左下 -->
+      <svg viewBox="0 0 130 100" class="hidden md:block absolute left-12 bottom-10 w-32 md:w-40 rotate-6 drop-shadow-md" fill="none">
+        <path d="M14 24 Q65 12 116 24 L116 30 Q65 18 14 30 Z" fill="#8C9FB0"/>
+        <path d="M65 22 Q40 16 16 20 L16 78 Q40 74 65 82 Z" fill="#FCFAF6" stroke="#D8D2C4" stroke-width="1.5"/>
+        <path d="M65 22 Q90 16 114 20 L114 78 Q90 74 65 82 Z" fill="#FCFAF6" stroke="#D8D2C4" stroke-width="1.5"/>
+        <line x1="65" y1="22" x2="65" y2="82" stroke="#D8D2C4" stroke-width="2"/>
+        <line x1="22" y1="30" x2="58" y2="30" stroke="#C6BFB1" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="38" x2="54" y2="38" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="22" y1="46" x2="56" y2="46" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="72" y1="30" x2="108" y2="30" stroke="#C6BFB1" stroke-width="3" stroke-linecap="round"/>
+        <line x1="72" y1="38" x2="104" y2="38" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="72" y1="46" x2="106" y2="46" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <path d="M62 82 L68 82 L68 97 L65 94 L62 97 Z" fill="#6E2E34"/>
+      </svg>
+
+      <!-- 收据 · 右下 -->
+      <svg viewBox="0 0 88 120" class="hidden md:block absolute right-10 bottom-16 w-24 md:w-28 rotate-12 drop-shadow-md" fill="none">
+        <path d="M16 8 H70 Q74 8 74 12 V98 L72 108 L64 98 L56 108 L48 98 L40 108 L32 98 L24 108 L16 98 Z" fill="#FCFAF6" stroke="#D8D2C4" stroke-width="1.5"/>
+        <line x1="23" y1="20" x2="66" y2="20" stroke="#C6BFB1" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="32" x2="60" y2="32" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="44" x2="54" y2="44" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="56" x2="62" y2="56" stroke="#D8D2C4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="72" x2="66" y2="72" stroke="#6E2E34" stroke-width="3" stroke-linecap="round"/>
+        <line x1="23" y1="84" x2="48" y2="84" stroke="#B98486" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+
+      <!-- 钢笔 · 左侧 -->
+      <svg viewBox="0 0 120 40" class="hidden lg:block absolute left-7 top-[44%] w-28 md:w-32 rotate-[22deg] drop-shadow-md" fill="none">
+        <path d="M2 20 L24 14 L24 26 Z" fill="#C3CFD9"/>
+        <path d="M2 20 L24 19 L24 21 Z" fill="#5C6F82"/>
+        <rect x="24" y="14" width="72" height="12" rx="5" fill="#6E2E34"/>
+        <rect x="24" y="14" width="10" height="12" rx="3" fill="#B98486"/>
+        <rect x="84" y="9" width="16" height="3.5" rx="1.75" fill="#884248"/>
+        <circle cx="98" cy="20" r="6.5" fill="#884248"/>
+        <circle cx="98" cy="20" r="2.5" fill="#D2AEAE"/>
+      </svg>
+
+      <!-- 钢笔 · 右侧 -->
+      <svg viewBox="0 0 120 40" class="hidden lg:block absolute right-7 bottom-[42%] w-28 md:w-32 -rotate-[18deg] drop-shadow-md" fill="none">
+        <path d="M2 20 L24 14 L24 26 Z" fill="#C3CFD9"/>
+        <path d="M2 20 L24 19 L24 21 Z" fill="#5C6F82"/>
+        <rect x="24" y="14" width="72" height="12" rx="5" fill="#6E2E34"/>
+        <rect x="24" y="14" width="10" height="12" rx="3" fill="#B98486"/>
+        <rect x="84" y="9" width="16" height="3.5" rx="1.75" fill="#884248"/>
+        <circle cx="98" cy="20" r="6.5" fill="#884248"/>
+        <circle cx="98" cy="20" r="2.5" fill="#D2AEAE"/>
+      </svg>
+    </div>
+
+    <div class="text-center z-10 space-y-6 px-4">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cream-400 bg-cream-50/80 text-xs font-mono text-dusty-600 backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-sage-400 animate-pulse"></span>
+        Interactive Portfolio v2.0
+      </div>
+
+      <h1 id="hero-title" class="text-5xl md:text-7xl font-extrabold tracking-tight cursor-pointer hover:scale-105 transition-transform duration-300 font-lcd text-[#6E2E34] drop-shadow-sm">
+        PORTFOLIO
+      </h1>
+
+      <div class="text-sm md:text-base max-w-md mx-auto space-y-1.5">
+        <div class="font-lcd font-semibold text-lg md:text-xl text-puce-600 tracking-wide">肖筠怡 · Cynthia</div>
+        <p class="text-dusty-500">点击上方文字或下方按钮，探索我的履历与作品</p>
+      </div>
+
+      <button id="enter-btn" class="mt-4 px-8 py-3 rounded-full bg-puce-600 hover:bg-puce-700 text-cream-50 font-medium shadow-lg shadow-puce-600/20 transition-all duration-300 hover:shadow-puce-700/30 flex items-center gap-2 mx-auto">
+        <span>进入系统</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <div class="absolute bottom-8 text-xs font-mono text-cream-500">
+      PRESS ANYKEY TO START
+    </div>
+  </section>
+
+  <!-- ==================== MAIN CALCULATOR WORKSPACE ==================== -->
+  <main id="app-workspace" class="min-h-screen opacity-0 transition-opacity duration-700 flex flex-col items-center justify-center p-4 md:p-8 relative">
+
+    <!-- Top Bar Navigation -->
+    <header class="w-full max-w-5xl flex items-center justify-between py-4 mb-6 border-b border-cream-300">
+      <div class="flex items-center gap-2 font-mono text-sm text-dusty-600">
+        <i data-lucide="terminal" class="w-4 h-4 text-puce-600"></i>
+        <span>XIAO.JY // RESUME-CALC</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="reset-cover-btn" class="text-xs font-mono px-3 py-1.5 rounded border border-cream-400 hover:bg-cream-200 transition text-dusty-600 hover:text-dusty-800 flex items-center gap-1.5">
+          <i data-lucide="home" class="w-3.5 h-3.5"></i> 封面
+        </button>
+      </div>
+    </header>
+
+    <!-- Horizontal Tagline (full width) -->
+    <div class="w-full max-w-5xl text-center mb-8">
+      <p class="font-lcd text-lg md:text-2xl font-bold tracking-wide text-puce-600">
+        “According to my calculation… <span class="text-dusty-500">we should work together</span><span class="cursor-blink text-dusty-400">▊</span>
+      </p>
+    </div>
+
+    <!-- Content Container (Split Grid) -->
+    <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- CALCULATOR DEVICE (Left Column on Desktop) -->
+      <div class="lg:col-span-5 flex flex-col items-center w-full">
+        <div class="w-full max-w-sm bg-dusty-400 border border-dusty-500/40 rounded-3xl p-6 shadow-calc relative">
+
+          <!-- Brand Badge & Solar Panel -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="font-lcd text-xs font-bold tracking-widest text-cream-50">XIAO.JY · FX-991</span>
+            <div class="w-16 h-5 bg-dusty-800/40 border border-dusty-700/50 rounded flex items-center justify-around px-1">
+              <div class="w-3 h-full border-r border-dusty-700/40"></div>
+              <div class="w-3 h-full border-r border-dusty-700/40"></div>
+              <div class="w-3 h-full"></div>
+            </div>
+          </div>
+
+          <!-- LCD Display Screen -->
+          <div class="bg-dusty-900 border-2 border-dusty-700 rounded-xl p-4 mb-6 shadow-inner relative overflow-hidden lcd-screen">
+            <div class="flex justify-between items-center text-[10px] font-mono text-dusty-300 mb-1">
+              <span id="lcd-mode">MODE: READY</span>
+              <span id="lcd-status" class="text-sage-400">● ONLINE</span>
+            </div>
+            <div id="lcd-text" class="font-lcd text-2xl md:text-3xl text-dusty-100 font-bold tracking-wider text-right h-10 flex items-center justify-end overflow-hidden">
+              000.00
+            </div>
+            <div id="lcd-subtext" class="font-mono text-xs text-dusty-300 text-right mt-1 h-4 overflow-hidden truncate">
+              [AC] 重置 | 按数字键选择
+            </div>
+          </div>
+
+          <!-- Keypad Grid -->
+          <div class="grid grid-cols-4 gap-3 font-mono">
+            <!-- Row 1 -->
+            <button onclick="handleKey('AC')" class="calc-btn calc-btn-red bg-puce-600 hover:bg-puce-700 text-white font-bold py-3 rounded-lg text-sm">AC</button>
+            <button onclick="handleKey('+/-')" class="calc-btn bg-dusty-100 hover:bg-dusty-200 text-dusty-700 py-3 rounded-lg text-sm">+/-</button>
+            <button onclick="handleKey('%')" class="calc-btn bg-dusty-100 hover:bg-dusty-200 text-dusty-700 py-3 rounded-lg text-sm">%</button>
+            <button onclick="handleKey('/')" class="calc-btn bg-dusty-500 hover:bg-dusty-400 text-white font-bold py-3 rounded-lg text-sm">÷</button>
+
+            <!-- Row 2 -->
+            <button onclick="handleKey('7')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">7</button>
+            <button onclick="handleKey('8')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">8</button>
+            <button onclick="handleKey('9')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">9</button>
+            <button onclick="handleKey('*')" class="calc-btn bg-dusty-500 hover:bg-dusty-400 text-white font-bold py-3 rounded-lg text-sm">×</button>
+
+            <!-- Row 3 -->
+            <button onclick="handleKey('4')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">4</button>
+            <button onclick="handleKey('5')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">5</button>
+            <button onclick="handleKey('6')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">6</button>
+            <button onclick="handleKey('-')" class="calc-btn bg-dusty-500 hover:bg-dusty-400 text-white font-bold py-3 rounded-lg text-sm">-</button>
+
+            <!-- Row 4 -->
+            <button onclick="handleKey('1')" class="calc-btn bg-dusty-700 hover:bg-dusty-600 text-white font-bold py-3 rounded-lg text-base border border-dusty-500/40">01</button>
+            <button onclick="handleKey('2')" class="calc-btn bg-dusty-700 hover:bg-dusty-600 text-white font-bold py-3 rounded-lg text-base border border-dusty-500/40">02</button>
+            <button onclick="handleKey('3')" class="calc-btn bg-dusty-700 hover:bg-dusty-600 text-white font-bold py-3 rounded-lg text-base border border-dusty-500/40">03</button>
+            <button onclick="handleKey('+')" class="calc-btn bg-dusty-500 hover:bg-dusty-400 text-white font-bold py-3 rounded-lg text-sm">+</button>
+
+            <!-- Row 5 -->
+            <button onclick="handleKey('4')" class="calc-btn bg-dusty-700 hover:bg-dusty-600 text-white font-bold py-3 rounded-lg text-base border border-dusty-500/40">04</button>
+            <button onclick="handleKey('0')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">0</button>
+            <button onclick="handleKey('.')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">.</button>
+            <button onclick="handleKey('=')" class="calc-btn calc-btn-red bg-puce-600 hover:bg-puce-700 text-white font-bold py-3 rounded-lg text-base">=</button>
+          </div>
+
+          <!-- Calculator Keymap Legend -->
+          <div class="mt-5 pt-4 border-t border-dusty-500/30 text-[11px] font-mono text-cream-50 grid grid-cols-2 gap-y-1">
+            <div><span class="text-dusty-100 font-bold">01</span>: 关于我</div>
+            <div><span class="text-dusty-100 font-bold">02</span>: 实习经历</div>
+            <div><span class="text-dusty-100 font-bold">03</span>: 专业技能</div>
+            <div><span class="text-dusty-100 font-bold">04</span>: 项目科研</div>
+            <div class="col-span-2"><span class="text-puce-200 font-bold">=</span> : 打印联系卡片 (Receipt)</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- DYNAMIC DISPLAY WINDOW (Right Column on Desktop) -->
+      <div class="lg:col-span-7 w-full">
+
+        <!-- Welcome Default View -->
+        <div id="view-default" class="content-panel bg-cream-50 border border-cream-300 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
+          <div class="text-center py-12 space-y-4">
+            <div class="w-16 h-16 rounded-2xl bg-dusty-100 text-dusty-600 flex items-center justify-center mx-auto border border-dusty-200">
+              <i data-lucide="calculator" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-dusty-800">欢迎使用 Resume Terminal</h3>
+            <p class="text-dusty-600 text-sm max-w-md mx-auto">
+              按下计算器上的对应按键快速调阅简历信息：
+            </p>
+            <div class="inline-flex flex-wrap justify-center gap-2 pt-2 text-xs font-mono">
+              <span class="px-2.5 py-1 bg-dusty-100 border border-dusty-200 rounded text-dusty-700">[01] About</span>
+              <span class="px-2.5 py-1 bg-dusty-100 border border-dusty-200 rounded text-dusty-700">[02] Internships</span>
+              <span class="px-2.5 py-1 bg-dusty-100 border border-dusty-200 rounded text-dusty-700">[03] Skills</span>
+              <span class="px-2.5 py-1 bg-dusty-100 border border-dusty-200 rounded text-dusty-700">[04] Projects</span>
+              <span class="px-2.5 py-1 bg-puce-50 border border-puce-200 rounded text-puce-600">[=] Receipt</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 01: ABOUT ME PANEL -->
+        <div id="view-about" class="content-panel hidden bg-cream-50 border border-cream-300 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-cream-300">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xs px-2 py-1 rounded bg-puce-50 text-puce-600 border border-puce-100">KEY 01</span>
+              <h2 class="text-xl font-bold text-dusty-800">关于我 / About Me</h2>
+            </div>
+            <button onclick="handleKey('AC')" class="text-dusty-400 hover:text-dusty-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+
+          <div class="space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full bg-dusty-600 border-2 border-dusty-400 flex items-center justify-center text-2xl font-bold text-white">
+                肖
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-dusty-800">肖筠怡</h3>
+                <p class="text-dusty-500 text-sm font-mono">咨询 / 财务方向 · Consulting &amp; Finance</p>
+                <p class="text-dusty-600 text-xs mt-1">📍 东北财经大学 · 财务管理 · 2027届</p>
+              </div>
+            </div>
+
+            <p class="text-[#4A453E]/80 text-sm leading-relaxed">
+              东北财经大学财务管理专业本科生，GPA 3.85，ACCA 已通过 4 门。拥有天健、天职两段会计师事务所实习经历，兼具财务核算功底与咨询分析思维，擅长用数据与结构化方法解决商业问题。
+            </p>
+
+            <div class="grid grid-cols-2 gap-4 pt-1">
+              <div class="p-3 bg-dusty-50 rounded-xl border border-dusty-200">
+                <div class="text-xs text-dusty-500 font-mono">教育背景</div>
+                <div class="text-sm font-medium text-dusty-800 mt-1">财务管理 · 本科（GPA 3.85）</div>
+              </div>
+              <div class="p-3 bg-puce-50 rounded-xl border border-puce-100">
+                <div class="text-xs text-puce-400 font-mono">意向岗位</div>
+                <div class="text-sm font-medium text-puce-600 mt-1">咨询 / 财务</div>
+              </div>
+            </div>
+
+            <!-- 主修课程 -->
+            <div>
+              <div class="text-xs text-dusty-500 font-mono mb-2">主修课程</div>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">微观经济学 · 92</span>
+                <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">商业经济学 · 94</span>
+                <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">财务会计 · 93</span>
+                <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">管理会计 · 94</span>
+                <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">Excel金融数学 · 94</span>
+              </div>
+            </div>
+
+            <!-- 获奖荣誉 -->
+            <div>
+              <div class="text-xs text-dusty-500 font-mono mb-2">获奖荣誉</div>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 bg-puce-50 rounded text-xs text-puce-600 border border-puce-100">校综合奖学金 ×2</span>
+                <span class="px-2.5 py-1 bg-puce-50 rounded text-xs text-puce-600 border border-puce-100">校“科研标兵”</span>
+                <span class="px-2.5 py-1 bg-puce-50 rounded text-xs text-puce-600 border border-puce-100">校“优秀学生干部”</span>
+                <span class="px-2.5 py-1 bg-puce-50 rounded text-xs text-puce-600 border border-puce-100">校“优秀共青团员”</span>
+                <span class="px-2.5 py-1 bg-puce-50 rounded text-xs text-puce-600 border border-puce-100">CGMA 省级三等奖</span>
+                <span class="px-2.5 py-1 bg-puce-50 rounded text-xs text-puce-600 border border-puce-100">“创青春”大连市铜奖</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 02: INTERNSHIP PANEL -->
+        <div id="view-experience" class="content-panel hidden bg-cream-50 border border-cream-300 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-cream-300">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xs px-2 py-1 rounded bg-puce-50 text-puce-600 border border-puce-100">KEY 02</span>
+              <h2 class="text-xl font-bold text-dusty-800">实习经历 / Internships</h2>
+            </div>
+            <button onclick="handleKey('AC')" class="text-dusty-400 hover:text-dusty-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+
+          <div class="relative pl-6 space-y-8 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-dusty-200">
+            <!-- Timeline Item 1 -->
+            <div class="relative">
+              <span class="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-puce-500 ring-4 ring-cream-50"></span>
+              <div class="flex justify-between items-baseline mb-1 flex-wrap gap-x-3">
+                <h3 class="text-base font-semibold text-dusty-800">咨询部实习生</h3>
+                <span class="font-mono text-xs text-dusty-500">2026.07 - 2026.08</span>
+              </div>
+              <div class="text-xs text-puce-600 font-mono mb-3">@ 天健会计师事务所</div>
+              <ul class="space-y-1.5 text-xs text-[#4A453E]/80 leading-relaxed list-none">
+                <li class="pl-3 relative"><span class="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-dusty-400"></span><b class="text-dusty-700">港股IPO：</b>研读联交所 ESG 指引，梳理 5 家港股同业招股书与客户资料，协同推进 5 场跨部门 ESG 访谈，输出 6 份 AI 访谈摘要、3 条优化建议，完成招股书 ESG 章节中英双语文稿撰写。</li>
+                <li class="pl-3 relative"><span class="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-dusty-400"></span><b class="text-dusty-700">内控梳理：</b>识别申报、审批、监督等关键控制点 100+ 个，编制 6 大业务流程、400+ 条风险控制矩阵。</li>
+                <li class="pl-3 relative"><span class="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-dusty-400"></span><b class="text-dusty-700">流程优化：</b>运用 draw.io 与 Claude AI 独立绘制 100+ 张可视化流程图，将复杂制度转化为直观路径。</li>
+              </ul>
+            </div>
+
+            <!-- Timeline Item 2 -->
+            <div class="relative">
+              <span class="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-dusty-400 ring-4 ring-cream-50"></span>
+              <div class="flex justify-between items-baseline mb-1 flex-wrap gap-x-3">
+                <h3 class="text-base font-semibold text-dusty-800">税务部实习生</h3>
+                <span class="font-mono text-xs text-dusty-500">2025.07 - 2025.08</span>
+              </div>
+              <div class="text-xs text-puce-600 font-mono mb-3">@ 天职国际会计师事务所</div>
+              <ul class="space-y-1.5 text-xs text-[#4A453E]/80 leading-relaxed list-none">
+                <li class="pl-3 relative"><span class="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-dusty-400"></span><b class="text-dusty-700">成本核查：</b>负责 100+ 项成本核查，覆盖申报、中期、结项全阶段，运用 Excel VLOOKUP、SUMIF 等函数归集成本。</li>
+                <li class="pl-3 relative"><span class="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-dusty-400"></span><b class="text-dusty-700">异常识别：</b>结合 AI 工具开展成本数据比对，识别 70+ 项费用超支、结余问题，出具 50+ 份可执行调整意见。</li>
+                <li class="pl-3 relative"><span class="absolute left-0 top-1.5 w-1 h-1 rounded-full bg-dusty-400"></span><b class="text-dusty-700">资产盘点：</b>定位 200+ 项目标资产完成台账更新，输出 10+ 篇清查报告，支撑资产盘点与账实核对。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 03: SKILLS PANEL -->
+        <div id="view-skills" class="content-panel hidden bg-cream-50 border border-cream-300 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-cream-300">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xs px-2 py-1 rounded bg-puce-50 text-puce-600 border border-puce-100">KEY 03</span>
+              <h2 class="text-xl font-bold text-dusty-800">专业技能 / Skills</h2>
+            </div>
+            <button onclick="handleKey('AC')" class="text-dusty-400 hover:text-dusty-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs font-mono mb-1">
+                <span class="text-dusty-800">语言 · 雅思 7.0（阅读 8.0）· CET-6 585</span>
+                <span class="text-puce-600">88%</span>
+              </div>
+              <div class="w-full h-2 bg-dusty-100 rounded-full overflow-hidden">
+                <div class="h-full bg-dusty-500 rounded-full" style="width: 88%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-mono mb-1">
+                <span class="text-dusty-800">专业能力 · ACCA 已通过 4 门（FA / MA / LW / TX）</span>
+                <span class="text-puce-600">85%</span>
+              </div>
+              <div class="w-full h-2 bg-dusty-100 rounded-full overflow-hidden">
+                <div class="h-full bg-dusty-500 rounded-full" style="width: 85%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-mono mb-1">
+                <span class="text-dusty-800">计算机 · 二级（WPS）· Excel / SQL / Python</span>
+                <span class="text-puce-600">80%</span>
+              </div>
+              <div class="w-full h-2 bg-dusty-100 rounded-full overflow-hidden">
+                <div class="h-full bg-dusty-500 rounded-full" style="width: 80%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-mono mb-1">
+                <span class="text-dusty-800">数据分析 · SPSS · AHP 模型 · 数据可视化</span>
+                <span class="text-puce-600">75%</span>
+              </div>
+              <div class="w-full h-2 bg-dusty-100 rounded-full overflow-hidden">
+                <div class="h-full bg-dusty-500 rounded-full" style="width: 75%"></div>
+              </div>
+            </div>
+
+            <div class="pt-4 flex flex-wrap gap-2">
+              <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">Draw.io</span>
+              <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">可画 / 秀米</span>
+              <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">Procreate</span>
+              <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">公众号运营</span>
+              <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">视频剪辑</span>
+              <span class="px-2.5 py-1 bg-cream-50 rounded text-xs text-dusty-700 border border-cream-300">ChatGPT / Claude / Coze</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 04: PROJECTS PANEL -->
+        <div id="view-projects" class="content-panel hidden bg-cream-50 border border-cream-300 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+          <div class="flex items-center justify-between pb-4 mb-6 border-b border-cream-300">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xs px-2 py-1 rounded bg-puce-50 text-puce-600 border border-puce-100">KEY 04</span>
+              <h2 class="text-xl font-bold text-dusty-800">项目科研 / Projects</h2>
+            </div>
+            <button onclick="handleKey('AC')" class="text-dusty-400 hover:text-dusty-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Project 1 -->
+            <div class="bg-cream-50 border border-cream-300 rounded-xl p-4 hover:border-cream-400 transition">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-sm font-bold text-dusty-800">CGMA 商业精英国际挑战赛</h3>
+                <i data-lucide="external-link" class="w-4 h-4 text-dusty-400"></i>
+              </div>
+              <div class="text-xs text-puce-600 font-mono mb-2">省级三等奖 · 核心成员 · 2025.11-2025.12</div>
+              <p class="text-xs text-[#4A453E]/70 mb-3">围绕客户转型案例，分析销售授权风险、JIT 采购财务比率与股权投资会计处理，识别 4 类风险并提出 6 条管控措施。</p>
+              <div class="flex gap-1.5 font-mono text-[10px] text-puce-600">
+                <span>#商赛</span> <span>#风险评估</span> <span>#财务分析</span>
+              </div>
+            </div>
+
+            <!-- Project 2 -->
+            <div class="bg-cream-50 border border-cream-300 rounded-xl p-4 hover:border-cream-400 transition">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-sm font-bold text-dusty-800">大创训练计划项目</h3>
+                <i data-lucide="external-link" class="w-4 h-4 text-dusty-400"></i>
+              </div>
+              <div class="text-xs text-puce-600 font-mono mb-2">国家级立项 · 项目负责人 · 2026.04-2026.09</div>
+              <p class="text-xs text-[#4A453E]/70 mb-3">以江永女书为核心构建“上游创收—下游增收—收益反哺”体系，开发线上书法课程与 AI 讲师“妤妤”，累计售出 40+ 课时。</p>
+              <div class="flex gap-1.5 font-mono text-[10px] text-puce-600">
+                <span>#大创</span> <span>#文化传承</span> <span>#项目统筹</span>
+              </div>
+            </div>
+
+            <!-- Project 3 -->
+            <div class="bg-cream-50 border border-cream-300 rounded-xl p-4 hover:border-cream-400 transition">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-sm font-bold text-dusty-800">科研论文（第二作者）</h3>
+                <i data-lucide="external-link" class="w-4 h-4 text-dusty-400"></i>
+              </div>
+              <div class="text-xs text-puce-600 font-mono mb-2">省级期刊《大视野》 · 2025.03-2026.02</div>
+              <p class="text-xs text-[#4A453E]/70 mb-3">《“00后”大学生就业心理焦虑问题破解对策研究》：26 题问卷回收 289 份样本，AHP + SPSS 测算诱因权重。</p>
+              <div class="flex gap-1.5 font-mono text-[10px] text-puce-600">
+                <span>#论文</span> <span>#量化研究</span> <span>#SPSS</span>
+              </div>
+            </div>
+
+            <!-- Project 4 -->
+            <div class="bg-cream-50 border border-cream-300 rounded-xl p-4 hover:border-cream-400 transition">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-sm font-bold text-dusty-800">《东财大学生》编辑部</h3>
+                <i data-lucide="external-link" class="w-4 h-4 text-dusty-400"></i>
+              </div>
+              <div class="text-xs text-puce-600 font-mono mb-2">文字编辑部部长 · 2023.09-2026.09</div>
+              <p class="text-xs text-[#4A453E]/70 mb-3">全国十佳社团：编撰 2 期纸质校刊、统筹 2 部校微电影、管理近 30 人团队，撰写 4 篇原创文稿（均阅读 1000+）。</p>
+              <div class="flex gap-1.5 font-mono text-[10px] text-puce-600">
+                <span>#学生工作</span> <span>#内容策划</span> <span>#团队管理</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- = RECEIPT / CONTACT CARD PANEL -->
+        <div id="view-receipt" class="content-panel hidden flex justify-center">
+          <div class="w-full max-w-sm bg-cream-50 text-[#4A453E] p-6 shadow-2xl rounded-sm font-mono text-xs border-t-8 border-dashed border-dusty-300 relative animate-print">
+
+            <div class="text-center pb-4 mb-4 border-b border-dashed border-cream-400">
+              <div class="font-bold text-base tracking-wider uppercase text-dusty-800">RESUME RECEIPT</div>
+              <div class="text-[10px] text-dusty-500 mt-0.5">THANK YOU FOR VISITING</div>
+              <div class="text-[10px] text-dusty-500 mt-1">DATE: <span id="receipt-date">2026-10-02</span></div>
+            </div>
+
+            <div class="space-y-2 mb-4">
+              <div class="flex justify-between">
+                <span>NAME:</span>
+                <span class="font-bold">肖筠怡 (Xiao Junyi)</span>
+              </div>
+              <div class="flex justify-between">
+                <span>ROLE:</span>
+                <span>咨询 / 财务方向</span>
+              </div>
+              <div class="flex justify-between">
+                <span>PHONE:</span>
+                <span>18701172187</span>
+              </div>
+              <div class="flex justify-between">
+                <span>EMAIL:</span>
+                <span class="underline">904799935@qq.com</span>
+              </div>
+              <div class="flex justify-between">
+                <span>GITHUB:</span>
+                <span class="underline">github.com/Cynthia-qii</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-dashed border-cream-400 flex justify-between font-bold text-sm">
+              <span>STATUS:</span>
+              <span class="text-puce-600">OPEN TO OPPORTUNITIES [OK]</span>
+            </div>
+
+            <div class="mt-6 text-center">
+              <div class="h-10 bg-dusty-800 w-full mb-1 flex justify-around items-center px-2">
+                <div class="w-1 h-full bg-cream-50"></div>
+                <div class="w-2 h-full bg-cream-50"></div>
+                <div class="w-0.5 h-full bg-cream-50"></div>
+                <div class="w-3 h-full bg-cream-50"></div>
+                <div class="w-1 h-full bg-cream-50"></div>
+                <div class="w-2 h-full bg-cream-50"></div>
+              </div>
+              <span class="text-[9px] text-dusty-500">ID: 2023212604 · PORTFOLIO</span>
+            </div>
+
+            <button onclick="handleKey('AC')" class="mt-4 w-full py-2 bg-dusty-700 text-white rounded text-xs hover:bg-dusty-600 transition">
+              关闭收据 [AC]
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== SCRIPT & LOGIC ==================== -->
+  <script>
+    lucide.createIcons();
+
+    const coverPage = document.getElementById('cover-page');
+    const heroTitle = document.getElementById('hero-title');
+    const enterBtn = document.getElementById('enter-btn');
+    const appWorkspace = document.getElementById('app-workspace');
+    const resetCoverBtn = document.getElementById('reset-cover-btn');
+
+    const lcdText = document.getElementById('lcd-text');
+    const lcdSubtext = document.getElementById('lcd-subtext');
+    const lcdMode = document.getElementById('lcd-mode');
+
+    const views = {
+      'default': document.getElementById('view-default'),
+      '1': document.getElementById('view-about'),
+      '2': document.getElementById('view-experience'),
+      '3': document.getElementById('view-skills'),
+      '4': document.getElementById('view-projects'),
+      '=': document.getElementById('view-receipt'),
+    };
+
+    let currentCalcInput = '0';
+
+    document.getElementById('receipt-date').innerText = new Date().toISOString().slice(0, 10);
+
+    function enterWorkspace() {
+      coverPage.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        coverPage.classList.add('hidden');
+        appWorkspace.classList.remove('opacity-0');
+      }, 700);
+    }
+
+    function returnToCover() {
+      coverPage.classList.remove('hidden');
+      setTimeout(() => {
+        coverPage.classList.remove('opacity-0', 'pointer-events-none');
+        appWorkspace.classList.add('opacity-0');
+      }, 50);
+    }
+
+    heroTitle.addEventListener('click', enterWorkspace);
+    enterBtn.addEventListener('click', enterWorkspace);
+    resetCoverBtn.addEventListener('click', returnToCover);
+
+    function handleKey(key) {
+      updateLcdDisplay(key);
+
+      Object.values(views).forEach(panel => {
+        if(panel) panel.classList.add('hidden');
+      });
+
+      switch (key) {
+        case '1':
+          views['1'].classList.remove('hidden');
+          lcdMode.innerText = "MODE: ABOUT";
+          lcdSubtext.innerText = "> 01: 关于我 (ABOUT ME)";
+          break;
+        case '2':
+          views['2'].classList.remove('hidden');
+          lcdMode.innerText = "MODE: INTERN";
+          lcdSubtext.innerText = "> 02: 实习经历 (INTERNSHIPS)";
+          break;
+        case '3':
+          views['3'].classList.remove('hidden');
+          lcdMode.innerText = "MODE: SKILLS";
+          lcdSubtext.innerText = "> 03: 专业技能 (SKILLS)";
+          break;
+        case '4':
+          views['4'].classList.remove('hidden');
+          lcdMode.innerText = "MODE: PROJ";
+          lcdSubtext.innerText = "> 04: 项目科研 (PROJECTS)";
+          break;
+        case '=':
+          views['='].classList.remove('hidden');
+          lcdMode.innerText = "MODE: PRINT";
+          lcdSubtext.innerText = "> PRINT: 联系卡片收据";
+          break;
+        case 'AC':
+          views['default'].classList.remove('hidden');
+          currentCalcInput = '0';
+          lcdText.innerText = '000.00';
+          lcdMode.innerText = "MODE: READY";
+          lcdSubtext.innerText = "[AC] 重置 | 按数字键选择";
+          break;
+        default:
+          if (currentCalcInput === '0') {
+            currentCalcInput = key;
+          } else {
+            if (currentCalcInput.length < 10) currentCalcInput += key;
+          }
+          lcdText.innerText = currentCalcInput;
+          views['default'].classList.remove('hidden');
+          break;
+      }
+    }
+
+    function updateLcdDisplay(key) {
+      if (['1', '2', '3', '4'].includes(key)) {
+        lcdText.innerText = `0${key}.00`;
+      } else if (key === '=') {
+        lcdText.innerText = 'PRINTING...';
+      }
+    }
+  </script>
+</body>
+</html>
