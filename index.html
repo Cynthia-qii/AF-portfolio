@@ -110,6 +110,8 @@
       animation: blink 1s steps(1) infinite;
     }
     @keyframes blink { 50% { opacity: 0; } }
+    /* 移动端自动滚动到详情面板时，顶部留一点间距 */
+    .content-panel { scroll-margin-top: 0.75rem; }
   </style>
 </head>
 <body class="bg-cream-100 text-[#4A453E] font-sans min-h-screen overflow-x-hidden antialiased selection:bg-puce-600 selection:text-white">
@@ -272,6 +274,13 @@
             <div id="lcd-subtext" class="font-mono text-xs text-dusty-300 text-right mt-1 h-4 overflow-hidden truncate">
               [AC] 重置 | 按数字键选择
             </div>
+            <div class="mt-2 pt-2 border-t border-dusty-700/60 flex flex-wrap justify-center gap-x-2.5 gap-y-1 text-[10px] font-mono text-dusty-200">
+              <span><span class="text-puce-300">01</span> 关于我</span>
+              <span><span class="text-puce-300">02</span> 实习</span>
+              <span><span class="text-puce-300">03</span> 技能</span>
+              <span><span class="text-puce-300">04</span> 项目</span>
+              <span><span class="text-puce-300">=</span> 收据</span>
+            </div>
           </div>
 
           <!-- Keypad Grid -->
@@ -305,15 +314,6 @@
             <button onclick="handleKey('0')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">0</button>
             <button onclick="handleKey('.')" class="calc-btn bg-white hover:bg-cream-50 text-dusty-800 font-bold py-3 rounded-lg text-base">.</button>
             <button onclick="handleKey('=')" class="calc-btn calc-btn-red bg-puce-600 hover:bg-puce-700 text-white font-bold py-3 rounded-lg text-base">=</button>
-          </div>
-
-          <!-- Calculator Keymap Legend -->
-          <div class="mt-5 pt-4 border-t border-dusty-500/30 text-[11px] font-mono text-cream-50 grid grid-cols-2 gap-y-1">
-            <div><span class="text-dusty-100 font-bold">01</span>: 关于我</div>
-            <div><span class="text-dusty-100 font-bold">02</span>: 实习经历</div>
-            <div><span class="text-dusty-100 font-bold">03</span>: 专业技能</div>
-            <div><span class="text-dusty-100 font-bold">04</span>: 项目科研</div>
-            <div class="col-span-2"><span class="text-puce-200 font-bold">=</span> : 打印联系卡片 (Receipt)</div>
           </div>
 
         </div>
@@ -683,6 +683,18 @@
     enterBtn.addEventListener('click', enterWorkspace);
     resetCoverBtn.addEventListener('click', returnToCover);
 
+    // 显示面板；移动端（<1024px）显示后自动平滑滚动到该面板
+    function revealPanel(panelKey) {
+      const panel = views[panelKey];
+      if (!panel) return;
+      panel.classList.remove('hidden');
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        setTimeout(() => {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+      }
+    }
+
     function handleKey(key) {
       updateLcdDisplay(key);
 
@@ -692,27 +704,27 @@
 
       switch (key) {
         case '1':
-          views['1'].classList.remove('hidden');
+          revealPanel('1');
           lcdMode.innerText = "MODE: ABOUT";
           lcdSubtext.innerText = "> 01: 关于我 (ABOUT ME)";
           break;
         case '2':
-          views['2'].classList.remove('hidden');
+          revealPanel('2');
           lcdMode.innerText = "MODE: INTERN";
           lcdSubtext.innerText = "> 02: 实习经历 (INTERNSHIPS)";
           break;
         case '3':
-          views['3'].classList.remove('hidden');
+          revealPanel('3');
           lcdMode.innerText = "MODE: SKILLS";
           lcdSubtext.innerText = "> 03: 专业技能 (SKILLS)";
           break;
         case '4':
-          views['4'].classList.remove('hidden');
+          revealPanel('4');
           lcdMode.innerText = "MODE: PROJ";
           lcdSubtext.innerText = "> 04: 项目科研 (PROJECTS)";
           break;
         case '=':
-          views['='].classList.remove('hidden');
+          revealPanel('=');
           lcdMode.innerText = "MODE: PRINT";
           lcdSubtext.innerText = "> PRINT: 联系卡片收据";
           break;
